@@ -57,8 +57,12 @@ AShooterWeapon::AShooterWeapon(const FObjectInitializer& ObjectInitializer) : Su
 #if WITH_IMGUI
 void AShooterWeapon::ImGuiTick() {
 	if (ImGui::CollapsingHeader("Weapon Configuration")) {
-		ImGui::Checkbox("Infinite Ammo", &WeaponConfig.bInfiniteAmmo);
-		ImGui::Checkbox("Infinite Clip", &WeaponConfig.bInfiniteClip);
+		if (ImGui::Checkbox("Infinite Ammo", &WeaponConfig.bInfiniteAmmo)) {
+			ServerSetbInfiniteAmmo(WeaponConfig.bInfiniteAmmo);
+		}
+		if (ImGui::Checkbox("Infinite Clip", &WeaponConfig.bInfiniteClip)) {
+			ServerSetbInfiniteClip(WeaponConfig.bInfiniteClip);
+		}
 		ImGui::SliderInt("Max Ammo", &WeaponConfig.MaxAmmo, 0, 1000);
 		ImGui::SliderInt("Ammo Per Clip", &WeaponConfig.AmmoPerClip, 1, 100);
 		ImGui::SliderFloat("Time Between Shots", &WeaponConfig.TimeBetweenShots, 0.05f, 1.0f);
@@ -82,6 +86,22 @@ void AShooterWeapon::ImGuiTick() {
 	}
 }
 #endif // WITH_IMGUI
+
+void AShooterWeapon::ServerSetbInfiniteAmmo_Implementation(bool bInfiniteAmmo) {
+	WeaponConfig.bInfiniteAmmo = bInfiniteAmmo;
+}
+
+bool AShooterWeapon::ServerSetbInfiniteAmmo_Validate(bool bInfiniteAmmo) {
+	return true;
+}
+
+void AShooterWeapon::ServerSetbInfiniteClip_Implementation(bool bInfiniteClip) {
+	WeaponConfig.bInfiniteClip = bInfiniteClip;
+}
+
+bool AShooterWeapon::ServerSetbInfiniteClip_Validate(bool bInfiniteClip) {
+	return true;
+}
 
 void AShooterWeapon::PostInitializeComponents()
 {

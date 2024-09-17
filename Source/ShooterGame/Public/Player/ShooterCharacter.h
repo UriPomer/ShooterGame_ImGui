@@ -406,7 +406,6 @@ public:
 	void ImGuiTick();
 	void ImGuiTickWithAuthority();
 #endif // WITH_IMGUI
-	
 
 	/** Identifies if pawn is in its dying state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)

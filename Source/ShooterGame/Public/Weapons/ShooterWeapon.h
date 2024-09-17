@@ -482,6 +482,12 @@ protected:
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerHandleFiring();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetbInfiniteAmmo(bool bValue);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetbInfiniteClip(bool bValue);
+
 	/** [local + server] handle weapon refire, compensating for slack time if the timer can't sample fast enough */
 	void HandleReFiring();
 
