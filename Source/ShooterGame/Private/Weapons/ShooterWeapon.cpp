@@ -53,6 +53,36 @@ AShooterWeapon::AShooterWeapon(const FObjectInitializer& ObjectInitializer) : Su
 	bNetUseOwnerRelevancy = true;
 }
 
+
+#if WITH_IMGUI
+void AShooterWeapon::ImGuiTick() {
+	if (ImGui::CollapsingHeader("Weapon Configuration")) {
+		ImGui::Checkbox("Infinite Ammo", &WeaponConfig.bInfiniteAmmo);
+		ImGui::Checkbox("Infinite Clip", &WeaponConfig.bInfiniteClip);
+		ImGui::SliderInt("Max Ammo", &WeaponConfig.MaxAmmo, 0, 1000);
+		ImGui::SliderInt("Ammo Per Clip", &WeaponConfig.AmmoPerClip, 1, 100);
+		ImGui::SliderFloat("Time Between Shots", &WeaponConfig.TimeBetweenShots, 0.05f, 1.0f);
+		ImGui::SliderFloat("Reload Duration", &WeaponConfig.NoAnimReloadDuration, 0.1f, 5.0f);
+	}
+
+	if (ImGui::CollapsingHeader("Current Ammo")) {
+		int _currentAmmo = CurrentAmmo;
+		if (ImGui::InputInt("Current Ammo", &_currentAmmo)) {
+			ServerSetCurrentAmmo(_currentAmmo);
+		}
+		int _currentAmmoInClip = CurrentAmmoInClip;
+		if(ImGui::InputInt("Current Ammo In Clip", &_currentAmmoInClip)){
+			ServerSetCurrentAmmoInClip(_currentAmmoInClip);
+		}
+	}
+
+	if (ImGui::CollapsingHeader("Weapon State")) {
+		ImGui::SliderFloat("Equip Duration", &EquipDuration, 0.1f, 5.0f);
+		ImGui::Checkbox("Automatic Weapon Catchup", &bAllowAutomaticWeaponCatchup);
+	}
+}
+#endif // WITH_IMGUI
+
 void AShooterWeapon::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -334,6 +364,23 @@ void AShooterWeapon::ClientStartReload_Implementation()
 {
 	StartReload();
 }
+
+void AShooterWeapon::ServerSetCurrentAmmo_Implementation(float count) {
+	CurrentAmmo = count;
+}
+
+bool AShooterWeapon::ServerSetCurrentAmmo_Validate(float count) {
+	return true;
+}
+
+void AShooterWeapon::ServerSetCurrentAmmoInClip_Implementation(float count) {
+	CurrentAmmoInClip = count;
+}
+
+bool AShooterWeapon::ServerSetCurrentAmmoInClip_Validate(float count) {
+	return true;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // Control

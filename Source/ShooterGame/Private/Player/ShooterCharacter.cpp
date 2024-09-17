@@ -78,6 +78,7 @@ void AShooterCharacter::BeginPlay()
 
 #if WITH_IMGUI
 	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTick);
+	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTickWithAuthority);
 #endif // WITH_IMGUI
 }
 
@@ -93,20 +94,122 @@ void AShooterCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 #if WITH_IMGUI
 void AShooterCharacter::ImGuiTick()
 {
-	ImGui::Begin("Game Data Changer");
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
+	if ( (GetLocalRole() == ROLE_Authority) || HasAuthority()) {
+		return;
+	}
+
+
+	FString WindowTitle = FString::Printf(TEXT("Character Data Changer - %s"), *GetName());
+	ImGui::Begin(TCHAR_TO_UTF8(*WindowTitle));
+
+	ImGui::PushID(this);
+
 	ImGui::Text("ImGui World Tick: Actor = '%ls', World = '%ls', CurrentWorld = '%ls'",
 		*GetNameSafe(this), *GetNameSafe(GetWorld()), *GetNameSafe(GWorld));
 
-	ImGui::Text("Health: %f", Health);
-	ImGui::SliderFloat("Health By Slider", &Health, 0.f, 100.f);
-	if (ImGui::InputFloat("Health By Input", &Health))
+	ImGui::Text("Character Data:");
+
+
+	float NewHealth = Health;
+	if (ImGui::SliderFloat("Health", &NewHealth, 0.f, GetMaxHealth()))
 	{
-		Health = FMath::Clamp(Health, 0.f, 100.f);
+		ServerSetHealth(NewHealth);
+	}
+
+	ImGui::SliderFloat("Targeting Speed Modifier", &TargetingSpeedModifier, 0.1f, 1.0f);
+	ImGui::SliderFloat("Running Speed Modifier", &RunningSpeedModifier, 1.0f, 2.0f);
+
+	if (this->CurrentWeapon)
+	{
+		CurrentWeapon->ImGuiTick();
+	}
+
+	if (ImGui::CollapsingHeader("Inventory"))
+	{
+		for (int i = 0; i < this->Inventory.Num(); ++i)
+		{
+			AShooterWeapon* Weapon = this->Inventory[i];
+			FString WeaponLabel = FString::Printf(TEXT("Weapon %d: %s"), i, *Weapon->GetName());
+			ImGui::Text("%s", TCHAR_TO_UTF8(*WeaponLabel));
+
+			FString ButtonLabel = FString::Printf(TEXT("Equip##%d"), i);
+			if (ImGui::Button(TCHAR_TO_UTF8(*ButtonLabel)))
+			{
+				EquipWeapon(Weapon);
+			}
+		}
+	}
+
+	ImGui::PopID();
+
+	ImGui::End();
+}
+#endif // WITH_IMGUI
+
+
+#if WITH_IMGUI
+void AShooterCharacter::ImGuiTickWithAuthority()
+{
+	if (GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+
+	ImGui::Begin("GM Panel - All Players");
+
+	for (TActorIterator<AShooterCharacter> It(GetWorld()); It; ++It)
+	{
+		AShooterCharacter* PlayerCharacter = *It;
+		FString PlayerName = PlayerCharacter->GetPlayerState()->GetPlayerName();
+
+		if (ImGui::CollapsingHeader(TCHAR_TO_UTF8(*FString::Printf(TEXT("%s##%p"), *PlayerName, PlayerCharacter))))
+		{
+			ImGui::PushID(PlayerCharacter);
+
+			float NewHealth = PlayerCharacter->Health;
+			if (ImGui::SliderFloat("Health", &NewHealth, 0.f, PlayerCharacter->GetMaxHealth()))
+			{
+				PlayerCharacter->Health = NewHealth;
+			}
+
+			ImGui::SliderFloat("Targeting Speed Modifier", &PlayerCharacter->TargetingSpeedModifier, 0.1f, 1.0f);
+			ImGui::SliderFloat("Running Speed Modifier", &PlayerCharacter->RunningSpeedModifier, 1.0f, 2.0f);
+
+			if (PlayerCharacter->CurrentWeapon)
+			{
+				PlayerCharacter->CurrentWeapon->ImGuiTick();
+			}
+
+			if (ImGui::CollapsingHeader("Inventory"))
+			{
+				for (int i = 0; i < PlayerCharacter->Inventory.Num(); ++i)
+				{
+					AShooterWeapon* Weapon = PlayerCharacter->Inventory[i];
+					ImGui::Text("Weapon %d: %s", i, *Weapon->GetName());
+
+					ImGui::PushID(i);
+					if (ImGui::Button("Equip"))
+					{
+						PlayerCharacter->EquipWeapon(Weapon);
+					}
+					ImGui::PopID();
+				}
+			}
+
+			ImGui::PopID();
+		}
 	}
 
 	ImGui::End();
 }
 #endif // WITH_IMGUI
+
+
 
 void AShooterCharacter::PostInitializeComponents()
 {
@@ -672,6 +775,17 @@ AShooterWeapon* AShooterCharacter::FindWeapon(TSubclassOf<AShooterWeapon> Weapon
 	return NULL;
 }
 
+void AShooterCharacter::ServerSetHealth_Implementation(float NewHealth)
+{
+	Health = FMath::Clamp(NewHealth, 0.f, static_cast<float>(GetMaxHealth()));
+}
+
+bool AShooterCharacter::ServerSetHealth_Validate(float NewHealth)
+{
+	return true;
+}
+
+
 void AShooterCharacter::EquipWeapon(AShooterWeapon* Weapon)
 {
 	if (Weapon)
@@ -1109,13 +1223,6 @@ bool AShooterCharacter::IsRunning() const
 void AShooterCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-#if WITH_IMGUI
-	ImGui::Begin("ImGui Debug Order Test");
-	ImGui::Text("Actor Tick: Actor = '%ls', World = '%ls', CurrentWorld = '%ls'",
-		*GetNameSafe(this), *GetNameSafe(GetWorld()), *GetNameSafe(GWorld));
-	ImGui::End();
-#endif // WITH_IMGUI
 
 	if (bWantsToRunToggled && !IsRunning())
 	{

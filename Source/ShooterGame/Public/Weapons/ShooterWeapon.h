@@ -447,6 +447,11 @@ protected:
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerStopReload();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetCurrentAmmo(float count);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetCurrentAmmoInClip(float count);
 
 	//////////////////////////////////////////////////////////////////////////
 	// Replication & effects
@@ -541,5 +546,9 @@ protected:
 	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns Mesh3P subobject **/
 	FORCEINLINE USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
+public:
+#if WITH_IMGUI
+	void ImGuiTick();
+#endif // WITH_IMGUI
 };
 

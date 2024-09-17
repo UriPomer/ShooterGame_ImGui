@@ -404,7 +404,9 @@ private:
 public:
 #if WITH_IMGUI
 	void ImGuiTick();
+	void ImGuiTickWithAuthority();
 #endif // WITH_IMGUI
+	
 
 	/** Identifies if pawn is in its dying state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)
@@ -485,6 +487,9 @@ protected:
 	/** update targeting state */
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerSetRunning(bool bNewRunning, bool bToggle);
+
+	UFUNCTION(reliable, server, WithValidation)
+	void ServerSetHealth(float NewHealth);
 
 	/** Builds list of points to check for pausing replication for a connection*/
 	void BuildPauseReplicationCheckPoints(TArray<FVector>& RelevancyCheckPoints);
