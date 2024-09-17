@@ -78,7 +78,7 @@ void AShooterCharacter::BeginPlay()
 
 #if WITH_IMGUI
 	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTick);
-	//FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTickWithAuthority);
+	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTickWithAuthority);
 #endif // WITH_IMGUI
 }
 
