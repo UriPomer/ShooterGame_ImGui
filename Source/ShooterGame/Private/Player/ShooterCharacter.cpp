@@ -78,7 +78,7 @@ void AShooterCharacter::BeginPlay()
 
 #if WITH_IMGUI
 	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTick);
-	FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTickWithAuthority);
+	//FImGuiDelegates::OnWorldDebug().AddUObject(this, &AShooterCharacter::ImGuiTickWithAuthority);
 #endif // WITH_IMGUI
 }
 
@@ -98,11 +98,6 @@ void AShooterCharacter::ImGuiTick()
 	{
 		return;
 	}
-
-	if ( (GetLocalRole() == ROLE_Authority) || HasAuthority()) {
-		return;
-	}
-
 
 	FString WindowTitle = FString::Printf(TEXT("Character Data Changer - %s"), *GetName());
 	ImGui::Begin(TCHAR_TO_UTF8(*WindowTitle));
@@ -161,6 +156,15 @@ void AShooterCharacter::ImGuiTickWithAuthority()
 	}
 
 	ImGui::Begin("GM Panel - All Players");
+
+	int NumPlayers = 0;
+	for (TActorIterator<AShooterCharacter> It(GetWorld()); It; ++It) {
+		NumPlayers++;
+	}
+
+	if (NumPlayers == 1) {
+		return;
+	}
 
 	for (TActorIterator<AShooterCharacter> It(GetWorld()); It; ++It)
 	{

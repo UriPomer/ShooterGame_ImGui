@@ -1021,6 +1021,7 @@ int32 AShooterWeapon::GetMaxAmmo() const
 bool AShooterWeapon::HasInfiniteAmmo() const
 {
 	const AShooterPlayerController* MyPC = (MyPawn != NULL) ? Cast<const AShooterPlayerController>(MyPawn->Controller) : NULL;
+	UE_LOG(LogTemp, Warning, TEXT("WeaponConfig.bInfiniteAmmo: %s"), WeaponConfig.bInfiniteAmmo ? TEXT("true") : TEXT("false"));
 	return WeaponConfig.bInfiniteAmmo || (MyPC && MyPC->HasInfiniteAmmo());
 }
 
